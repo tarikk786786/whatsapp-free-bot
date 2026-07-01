@@ -13,7 +13,7 @@
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@prisma/client": "^5.22.0",
-    "@whiskeysockets/baileys": "^6.7.9",
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "openai": "^6.45.0",
