@@ -6,9 +6,9 @@ const prisma = new PrismaClient();
 
 router.get('/stats', async (req, res) => {
     try {
-        const totalUsers = await prisma.user.count();
-        const totalChats = await prisma.chat.count();
-        const totalMessages = await prisma.message.count();
+        const totalUsers = await prisma.users.count();
+        const totalChats = await prisma.chats.count();
+        const totalMessages = await prisma.messages.count();
         
         res.json({
             status: 'success',

@@ -11,7 +11,8 @@ const ai = new OpenAI({
 
 export async function generateReply(contactId: string, incomingMessage: string): Promise<string> {
     try {
-        const memory = await prisma.memory.findUnique({ where: { contactId } });
+        const user = await prisma.users.findUnique({ where: { phone: contactId } });
+        const memory = user ? await prisma.memory.findFirst({ where: { user_id: user.id } }) : null;
         
         const systemPrompt = `You are a helpful WhatsApp AI assistant. 
         Context about this user: ${memory?.summary || 'New user.'}
