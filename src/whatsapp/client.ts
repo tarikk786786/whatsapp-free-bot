@@ -2,7 +2,7 @@ import { makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } from 
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 import pino from 'pino';
-import { generateReply } from '../ai/gemini';
+import { generateReply } from '../ai/llm';
 
 export async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
