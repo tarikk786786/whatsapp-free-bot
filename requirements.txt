@@ -1,0 +1,6 @@
+pywa
+whatsapp-api-client-python
+supabase
+openai
+
+fastapi
