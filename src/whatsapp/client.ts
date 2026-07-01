@@ -63,22 +63,23 @@ export async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('messages.upsert', async (m) => {
-        const msg = m.messages[0];
-        if (!msg.message || msg.key.fromMe) return;
+        try {
+            const msg = m.messages[0];
+            if (!msg.message || msg.key.fromMe) return;
 
-        const remoteJid = msg.key.remoteJid;
-        const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
+            const remoteJid = msg.key.remoteJid;
+            const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
 
-        if (remoteJid && text) {
-            await addLog('info', `Received message from ${remoteJid}: ${text}`, 'message');
-            
-            const aiReply = await generateReply(remoteJid, text);
-            
-            await sock.sendPresenceUpdate('composing', remoteJid);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            await sock.sendMessage(remoteJid, { text: aiReply });
-            await addLog('info', `Sent reply to ${remoteJid}: ${aiReply}`, 'message');
+            if (remoteJid && text) {
+                await addLog('info', `Received message from ${remoteJid}: ${text}`, 'message');
+                
+                const aiReply = await generateReply(remoteJid, text);
+                
+                await sock.sendMessage(remoteJid, { text: aiReply });
+                await addLog('info', `Sent reply to ${remoteJid}: ${aiReply}`, 'message');
+            }
+        } catch (err) {
+            console.error('Error handling incoming message:', err);
         }
     });
 }
