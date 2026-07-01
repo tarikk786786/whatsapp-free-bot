@@ -16,6 +16,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+import { connectionStatus, currentQR } from './whatsapp/client';
+app.get('/debug-status', (req, res) => {
+  res.json({ connectionStatus, hasQR: !!currentQR });
+});
+
 // Serve Dashboard (Static Files)
 app.use(express.static(path.join(__dirname, '../dashboard/dist')));
 app.get('*', (req, res) => {
