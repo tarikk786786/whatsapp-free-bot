@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/api';
 
 export default function Users() {
     const [users, setUsers] = useState<any[]>([]);
 
     useEffect(() => {
-        fetch('/api/users')
+        apiFetch('/api/users')
             .then(res => res.json())
             .then(data => setUsers(data.data || []))
             .catch(err => console.error(err));

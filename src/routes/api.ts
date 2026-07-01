@@ -1,8 +1,47 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+import { currentQR, connectionStatus } from '../whatsapp/client';
 
 const router = Router();
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-change-in-prod';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+
+router.post('/login', (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+        const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ status: 'success', token });
+    } else {
+        res.status(401).json({ status: 'error', message: 'Invalid password' });
+    }
+});
+
+// Middleware to protect all routes below
+router.use((req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        jwt.verify(token, JWT_SECRET);
+        next();
+    } catch (err) {
+        return res.status(401).json({ status: 'error', message: 'Invalid token' });
+    }
+});
+
+router.get('/status', (req, res) => {
+    res.json({
+        status: 'success',
+        data: {
+            connectionStatus,
+            qr: currentQR
+        }
+    });
+});
 
 router.get('/stats', async (req, res) => {
     try {

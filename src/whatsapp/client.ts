@@ -1,13 +1,34 @@
 import { makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
-import qrcode from 'qrcode-terminal';
 import pino from 'pino';
 import { generateReply } from '../ai/llm';
+import { PrismaClient } from '@prisma/client';
+
+export let currentQR: string | null = null;
+export let connectionStatus: 'disconnected' | 'qr' | 'connected' = 'disconnected';
+
+const prisma = new PrismaClient();
+
+async function addLog(level: string, message: string, source: string = 'whatsapp', details: any = null) {
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    try {
+        await prisma.logs.create({
+            data: {
+                level,
+                message,
+                source,
+                details: details ? details : {}
+            }
+        });
+    } catch (e) {
+        console.error('Failed to save log to db', e);
+    }
+}
 
 export async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
     const { version, isLatest } = await fetchLatestBaileysVersion();
-    console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
+    await addLog('info', `Using WA v${version.join('.')}, isLatest: ${isLatest}`, 'system');
 
     const sock = makeWASocket({
         version,
@@ -15,22 +36,27 @@ export async function connectToWhatsApp() {
         logger: pino({ level: 'silent' })
     });
 
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
-        console.log('Connection update:', update);
         
         if (qr) {
-            console.log('Scan the QR code below to connect to WhatsApp:');
-            qrcode.generate(qr, { small: true });
+            await addLog('info', 'New QR code received');
+            currentQR = qr;
+            connectionStatus = 'qr';
         }
 
         if (connection === 'close') {
+            currentQR = null;
+            connectionStatus = 'disconnected';
             const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+            await addLog('error', `Connection closed. Reconnecting: ${shouldReconnect}`);
             if (shouldReconnect) {
                 connectToWhatsApp();
             }
         } else if (connection === 'open') {
-            console.log('Successfully connected to WhatsApp!');
+            currentQR = null;
+            connectionStatus = 'connected';
+            await addLog('info', 'Successfully connected to WhatsApp!');
         }
     });
 
@@ -44,7 +70,7 @@ export async function connectToWhatsApp() {
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
 
         if (remoteJid && text) {
-            console.log(`Received message from ${remoteJid}: ${text}`);
+            await addLog('info', `Received message from ${remoteJid}: ${text}`, 'message');
             
             const aiReply = await generateReply(remoteJid, text);
             
@@ -52,7 +78,7 @@ export async function connectToWhatsApp() {
             await new Promise(resolve => setTimeout(resolve, 2000));
             
             await sock.sendMessage(remoteJid, { text: aiReply });
-            console.log(`Sent reply to ${remoteJid}: ${aiReply}`);
+            await addLog('info', `Sent reply to ${remoteJid}: ${aiReply}`, 'message');
         }
     });
 }

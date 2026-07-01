@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/api';
 
 export default function Settings() {
     const [settings, setSettings] = useState<any>({ systemPrompt: '' });
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        fetch('/api/settings')
+        apiFetch('/api/settings')
             .then(res => res.json())
             .then(data => {
                 if (data.data) {
@@ -18,7 +19,7 @@ export default function Settings() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await fetch('/api/settings', {
+            await apiFetch('/api/settings', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'

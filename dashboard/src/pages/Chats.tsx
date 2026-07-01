@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/api';
 
 export default function Chats() {
     const [chats, setChats] = useState<any[]>([]);
 
     useEffect(() => {
-        fetch('/api/chats')
+        apiFetch('/api/chats')
             .then(res => res.json())
             .then(data => setChats(data.data || []))
             .catch(err => console.error(err));

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/api';
 
 export default function Logs() {
     const [logs, setLogs] = useState<any[]>([]);
 
     useEffect(() => {
-        fetch('/api/logs')
+        apiFetch('/api/logs')
             .then(res => res.json())
             .then(data => setLogs(data.data || []))
             .catch(err => console.error(err));

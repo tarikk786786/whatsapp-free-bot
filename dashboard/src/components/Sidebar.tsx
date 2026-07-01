@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Activity, MessageSquare, Users, Settings, Database } from 'lucide-react';
+import { Activity, MessageSquare, Users, Settings, Database, LogOut } from 'lucide-react';
+import { apiFetch } from '../lib/api';
 
 export default function Sidebar() {
     const [stats, setStats] = useState<any>(null);
 
     useEffect(() => {
-        fetch('/api/stats')
+        apiFetch('/api/stats')
             .then(res => res.json())
             .then(data => setStats(data.data))
             .catch(err => console.error(err));
@@ -45,10 +46,20 @@ export default function Sidebar() {
             </nav>
             
             <div className="pt-6 border-t border-gray-200">
-                <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 mb-2">
                     <div className={`w-2 h-2 rounded-full ${stats?.connectionStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'}`}></div>
                     WhatsApp {stats?.connectionStatus || 'Disconnected'}
                 </div>
+                
+                <button 
+                    onClick={() => {
+                        localStorage.removeItem('token');
+                        window.location.reload();
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+                >
+                    <LogOut size={16} /> Sign Out
+                </button>
             </div>
         </div>
     );
