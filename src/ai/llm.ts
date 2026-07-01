@@ -14,7 +14,13 @@ export async function generateReply(contactId: string, incomingMessage: string):
         const user = await prisma.users.findUnique({ where: { phone: contactId } });
         const memory = user ? await prisma.memory.findFirst({ where: { user_id: user.id } }) : null;
         
-        const systemPrompt = `You are a helpful WhatsApp AI assistant. 
+        const setting = await prisma.settings.findUnique({ where: { key: 'bot_config' } });
+        let customPrompt = 'You are a helpful WhatsApp AI assistant.';
+        if (setting && setting.value && typeof setting.value === 'object' && 'systemPrompt' in setting.value) {
+            customPrompt = (setting.value as any).systemPrompt || customPrompt;
+        }
+
+        const systemPrompt = `${customPrompt}
         Context about this user: ${memory?.summary || 'New user.'}
         Keep your responses concise and natural for a chat app.`;
         
