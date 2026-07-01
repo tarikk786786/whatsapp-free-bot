@@ -9,7 +9,6 @@ export async function connectToWhatsApp() {
 
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true,
         logger: pino({ level: 'silent' }),
         browser: Browsers.macOS('Desktop')
     });

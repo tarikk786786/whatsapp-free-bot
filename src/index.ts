@@ -17,9 +17,9 @@ app.get('/health', (req, res) => {
 });
 
 // Serve Dashboard (Static Files)
-app.use(express.static(path.join(__dirname, '../../dashboard/dist')));
+app.use(express.static(path.join(__dirname, '../dashboard/dist')));
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../dashboard/dist/index.html'));
+    res.sendFile(path.join(__dirname, '../dashboard/dist/index.html'));
 });
 
 app.listen(port, () => {
