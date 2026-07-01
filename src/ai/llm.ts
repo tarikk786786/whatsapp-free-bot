@@ -23,7 +23,7 @@ Update the profile summary with any new, relevant facts about the user. Keep it 
 
         const chatCompletion = await groq.chat.completions.create({
             messages: [{ role: 'system', content: memoryPrompt }],
-            model: 'llama3-8b-8192',
+            model: 'llama-3.1-8b-instant',
             max_tokens: 100,
         });
         
@@ -70,7 +70,7 @@ export async function generateReply(contactId: string, incomingMessage: string):
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: incomingMessage }
             ],
-            model: 'llama3-8b-8192',
+            model: 'llama-3.1-8b-instant',
             max_tokens: 150,
         });
         
