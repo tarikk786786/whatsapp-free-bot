@@ -48,9 +48,22 @@ export async function connectToWhatsApp() {
         if (connection === 'close') {
             currentQR = null;
             connectionStatus = 'disconnected';
-            const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-            await addLog('error', `Connection closed. Reconnecting: ${shouldReconnect}`);
+            const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            
+            await addLog('error', `Connection closed. Reconnecting: ${shouldReconnect}, statusCode: ${statusCode}`);
+            
             if (shouldReconnect) {
+                connectToWhatsApp();
+            } else {
+                // We are logged out. Delete the old session and restart to generate a new QR!
+                await addLog('warn', 'Logged out from WhatsApp. Wiping old session and generating new QR...');
+                const fs = require('fs');
+                try {
+                    fs.rmSync('auth_info_baileys', { recursive: true, force: true });
+                } catch (err) {
+                    console.error('Failed to delete auth folder', err);
+                }
                 connectToWhatsApp();
             }
         } else if (connection === 'open') {
