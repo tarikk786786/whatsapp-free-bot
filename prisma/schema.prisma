@@ -9,12 +9,14 @@ datasource db {
 }
 
 model users {
-  id         String   @id @default(uuid())
-  phone      String   @unique
-  name       String?
-  created_at DateTime @default(now())
-  chats      chats[]
-  memory     memory[]
+  id            String   @id @default(uuid())
+  phone         String   @unique
+  name          String?
+  tag           String?
+  custom_prompt String?
+  created_at    DateTime @default(now())
+  chats         chats[]
+  memory        memory[]
 }
 
 model chats {

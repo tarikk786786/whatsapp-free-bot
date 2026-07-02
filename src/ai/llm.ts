@@ -87,7 +87,13 @@ export async function generateReply(contactId: string, incomingMessage: string):
         }
 
         const currentMemoryStr = memory?.summary || 'New user.';
-        const systemPrompt = `${customPrompt}\n\n[BEHAVIOR RULES]\n${aiModeStr}\n${replyLengthStr}\n${emojiLevelStr}\n\n[USER CONTEXT]\n${currentMemoryStr}`;
+        
+        let finalPrompt = customPrompt;
+        if (user && user.custom_prompt) {
+            finalPrompt = user.custom_prompt;
+        }
+
+        const systemPrompt = `${finalPrompt}\n\n[BEHAVIOR RULES]\n${aiModeStr}\n${replyLengthStr}\n${emojiLevelStr}\n\n[USER CONTEXT]\n${currentMemoryStr}`;
         
         if (!groq) {
             return "Please configure GROQ_API_KEY in your environment variables to enable the AI.";

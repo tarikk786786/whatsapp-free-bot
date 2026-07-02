@@ -118,6 +118,11 @@ export async function connectToWhatsApp() {
                     create: { phone: remoteJid, name: pushName }
                 });
 
+                if (user.tag === 'Blocked') {
+                    await addLog('info', `Ignored message from Blocked contact: ${remoteJid}`, 'system');
+                    return;
+                }
+
                 // 2. Ensure Chat exists
                 const chat = await prisma.chats.findFirst({ where: { user_id: user.id } }) || await prisma.chats.create({
                     data: { user_id: user.id }

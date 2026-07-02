@@ -99,6 +99,8 @@ router.get('/users', async (req, res) => {
             id: u.id,
             phoneNumber: u.phone,
             name: u.name,
+            tag: u.tag,
+            custom_prompt: u.custom_prompt,
             memory: u.memory.length > 0 ? u.memory[0] : {}
         }));
         
@@ -106,6 +108,38 @@ router.get('/users', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ status: 'error', message: 'Failed to fetch users' });
+    }
+});
+
+// PUT /api/users/:id
+router.put('/users/:id', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { tag, custom_prompt, summary } = req.body;
+        
+        await prisma.users.update({
+            where: { id: userId },
+            data: { tag, custom_prompt }
+        });
+
+        if (summary !== undefined) {
+            const existingMemory = await prisma.memory.findFirst({ where: { user_id: userId } });
+            if (existingMemory) {
+                await prisma.memory.update({
+                    where: { id: existingMemory.id },
+                    data: { summary }
+                });
+            } else {
+                await prisma.memory.create({
+                    data: { user_id: userId, summary }
+                });
+            }
+        }
+
+        res.json({ status: 'success', message: 'User updated' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Failed to update user' });
     }
 });
 
