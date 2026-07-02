@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { currentQR, connectionStatus } from '../whatsapp/client';
+import { summarizeChat } from '../ai/llm';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -84,6 +85,28 @@ router.get('/chats', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ status: 'error', message: 'Failed to fetch chats' });
+    }
+});
+
+// POST /api/chats/:id/summarize
+router.post('/chats/:id/summarize', async (req, res) => {
+    try {
+        const chatId = req.params.id;
+        const messages = await prisma.messages.findMany({
+            where: { chat_id: chatId },
+            orderBy: { timestamp: 'asc' },
+            take: 50 // only summarize the last 50 messages to save context limit
+        });
+        
+        if (messages.length === 0) {
+            return res.json({ status: 'success', summary: 'No messages to summarize.' });
+        }
+
+        const summary = await summarizeChat(messages);
+        res.json({ status: 'success', summary });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Failed to generate chat summary' });
     }
 });
 

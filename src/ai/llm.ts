@@ -93,7 +93,14 @@ export async function generateReply(contactId: string, incomingMessage: string):
             finalPrompt = user.custom_prompt;
         }
 
-        const systemPrompt = `${finalPrompt}\n\n[BEHAVIOR RULES]\n${aiModeStr}\n${replyLengthStr}\n${emojiLevelStr}\n\n[USER CONTEXT]\n${currentMemoryStr}`;
+        const cognitiveBehaviors = `
+[COGNITIVE RULES]
+- Auto-Language: Always reply in the EXACT language the user is speaking.
+- Intent Detection: Analyze the user's message. If it's a complaint, be highly empathetic. If it's a scheduling/meeting request, be extremely precise and concise. If it's a casual greeting, return a personalized greeting.
+- Grammar & Typos: Ensure your own responses are grammatically perfect and free of typos, regardless of how the user types.
+`;
+
+        const systemPrompt = `${finalPrompt}\n\n[BEHAVIOR RULES]\n${aiModeStr}\n${replyLengthStr}\n${emojiLevelStr}\n${cognitiveBehaviors}\n\n[USER CONTEXT]\n${currentMemoryStr}`;
         
         if (!groq) {
             return "Please configure GROQ_API_KEY in your environment variables to enable the AI.";
@@ -119,5 +126,28 @@ export async function generateReply(contactId: string, incomingMessage: string):
     } catch (error) {
         console.error('Error generating AI reply:', error);
         return "I'm experiencing some technical difficulties right now. Please try again later.";
+    }
+}
+
+export async function summarizeChat(messages: any[]): Promise<string> {
+    if (!groq) return "AI is not configured (missing API Key).";
+    if (messages.length === 0) return "No messages to summarize.";
+
+    try {
+        const transcript = messages.map(m => `${m.sender === 'bot' ? 'Bot' : 'User'}: ${m.text}`).join('\n');
+        
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [{
+                role: 'system', 
+                content: `You are an AI assistant. Please provide a concise, 2-3 sentence summary of the following conversation transcript. Highlight the main topics discussed and any actionable items.\n\nTranscript:\n${transcript}`
+            }],
+            model: 'llama-3.1-8b-instant',
+            max_tokens: 150,
+        });
+
+        return chatCompletion.choices[0]?.message?.content?.trim() || "Failed to generate summary.";
+    } catch (e) {
+        console.error('Failed to summarize chat:', e);
+        return "An error occurred while summarizing the chat.";
     }
 }
