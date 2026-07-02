@@ -17,7 +17,7 @@ async function addLog(level: string, message: string, source: string = 'whatsapp
                 level,
                 message,
                 source,
-                details: details ? details : {}
+                details: details ? JSON.stringify(details) : "{}"
             }
         });
     } catch (e) {

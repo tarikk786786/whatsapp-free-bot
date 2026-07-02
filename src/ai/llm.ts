@@ -57,8 +57,11 @@ export async function generateReply(contactId: string, incomingMessage: string):
         
         const setting = await prisma.settings.findUnique({ where: { key: 'bot_config' } });
         let customPrompt = 'You are a helpful WhatsApp AI assistant.';
-        if (setting && setting.value && typeof setting.value === 'object' && 'systemPrompt' in setting.value) {
-            customPrompt = (setting.value as any).systemPrompt || customPrompt;
+        if (setting && setting.value) {
+            try {
+                const parsed = JSON.parse(setting.value);
+                customPrompt = parsed.systemPrompt || customPrompt;
+            } catch(e) {}
         }
 
         const currentMemoryStr = memory?.summary || 'New user.';

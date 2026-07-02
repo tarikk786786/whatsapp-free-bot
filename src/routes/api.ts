@@ -138,7 +138,11 @@ router.get('/settings', async (req, res) => {
             where: { key: 'bot_config' }
         });
         
-        res.json({ status: 'success', data: setting?.value || { systemPrompt: '' } });
+        let parsedValue = { systemPrompt: '' };
+        if (setting && setting.value) {
+            try { parsedValue = JSON.parse(setting.value); } catch(e){}
+        }
+        res.json({ status: 'success', data: parsedValue });
     } catch (error) {
         console.error(error);
         res.status(500).json({ status: 'error', message: 'Failed to fetch settings' });
@@ -149,10 +153,11 @@ router.get('/settings', async (req, res) => {
 router.put('/settings', async (req, res) => {
     try {
         const body = req.body;
+        const stringValue = JSON.stringify(body);
         await prisma.settings.upsert({
             where: { key: 'bot_config' },
-            update: { value: body },
-            create: { key: 'bot_config', value: body }
+            update: { value: stringValue },
+            create: { key: 'bot_config', value: stringValue }
         });
         
         res.json({ status: 'success', message: 'Settings saved' });
