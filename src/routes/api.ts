@@ -56,7 +56,7 @@ router.get('/stats', async (req, res) => {
                 chats: totalChats,
                 messages: totalMessages,
                 aiStatus: 'active',
-                connectionStatus: 'connected'
+                connectionStatus
             }
         });
     } catch (error) {
