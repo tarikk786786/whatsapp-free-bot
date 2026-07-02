@@ -86,10 +86,61 @@ export async function connectToWhatsApp() {
             if (remoteJid && text) {
                 await addLog('info', `Received message from ${remoteJid}: ${text}`, 'message');
                 
-                const aiReply = await generateReply(remoteJid, text);
+                // 1. Ensure User exists
+                const pushName = msg.pushName || undefined;
+                const user = await prisma.users.upsert({
+                    where: { phone: remoteJid },
+                    update: { name: pushName },
+                    create: { phone: remoteJid, name: pushName }
+                });
+
+                // 2. Ensure Chat exists
+                const chat = await prisma.chats.findFirst({ where: { user_id: user.id } }) || await prisma.chats.create({
+                    data: { user_id: user.id }
+                });
+
+                // Update chat with last message and increment unread (since it's incoming)
+                await prisma.chats.update({
+                    where: { id: chat.id },
+                    data: {
+                        last_message: text,
+                        updated_at: new Date(),
+                        unread_count: { increment: 1 }
+                    }
+                });
+
+                // 3. Save incoming message
+                await prisma.messages.create({
+                    data: {
+                        chat_id: chat.id,
+                        sender: remoteJid,
+                        text: text,
+                        status: 'received'
+                    }
+                });
                 
+                // 4. Generate AI reply
+                const aiReply = await generateReply(remoteJid, text);
                 await sock.sendMessage(remoteJid, { text: aiReply });
                 await addLog('info', `Sent reply to ${remoteJid}: ${aiReply}`, 'message');
+
+                // 5. Save outgoing message and update chat
+                await prisma.messages.create({
+                    data: {
+                        chat_id: chat.id,
+                        sender: 'bot',
+                        text: aiReply,
+                        status: 'sent'
+                    }
+                });
+
+                await prisma.chats.update({
+                    where: { id: chat.id },
+                    data: {
+                        last_message: aiReply,
+                        updated_at: new Date()
+                    }
+                });
             }
         } catch (err) {
             console.error('Error handling incoming message:', err);
