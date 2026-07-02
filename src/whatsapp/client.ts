@@ -86,6 +86,30 @@ export async function connectToWhatsApp() {
             if (remoteJid && text) {
                 await addLog('info', `Received message from ${remoteJid}: ${text}`, 'message');
                 
+                // Fetch settings to enforce reply rules
+                const setting = await prisma.settings.findUnique({ where: { key: 'bot_config' } });
+                let config: any = {};
+                if (setting && setting.value) {
+                    try { config = JSON.parse(setting.value); } catch(e){}
+                }
+
+                if (config.ignoreUnknown) {
+                    const existingUser = await prisma.users.findUnique({ where: { phone: remoteJid } });
+                    if (!existingUser) {
+                        await addLog('info', `Ignored message from unknown number: ${remoteJid}`, 'system');
+                        return;
+                    }
+                }
+
+                if (config.quietHours) {
+                    const hour = new Date().getHours();
+                    // 10 PM (22) to 7 AM (7)
+                    if (hour >= 22 || hour < 7) {
+                        await addLog('info', `Ignored message due to quiet hours: ${remoteJid}`, 'system');
+                        return;
+                    }
+                }
+
                 // 1. Ensure User exists
                 const pushName = msg.pushName || undefined;
                 const user = await prisma.users.upsert({

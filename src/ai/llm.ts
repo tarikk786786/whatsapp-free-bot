@@ -57,15 +57,37 @@ export async function generateReply(contactId: string, incomingMessage: string):
         
         const setting = await prisma.settings.findUnique({ where: { key: 'bot_config' } });
         let customPrompt = 'You are a helpful WhatsApp AI assistant.';
+        let aiModeStr = '';
+        let replyLengthStr = 'Length: Keep replies concise and natural for chat.';
+        let emojiLevelStr = 'Emojis: Use emojis naturally and sparingly.';
+
         if (setting && setting.value) {
             try {
                 const parsed = JSON.parse(setting.value);
                 customPrompt = parsed.systemPrompt || customPrompt;
+                
+                switch(parsed.aiMode) {
+                    case 'casual': aiModeStr = 'Tone: Casual and relaxed. Talk like a friend.'; break;
+                    case 'professional': aiModeStr = 'Tone: Highly professional and polite.'; break;
+                    case 'friendly': aiModeStr = 'Tone: Friendly, warm, and helpful.'; break;
+                    case 'romantic': aiModeStr = 'Tone: Romantic, sweet, and affectionate.'; break;
+                    case 'business': aiModeStr = 'Tone: Direct, business-oriented customer support.'; break;
+                }
+
+                switch(parsed.replyLength) {
+                    case 'short': replyLengthStr = 'Length: Keep replies extremely short (1-2 sentences max).'; break;
+                    case 'long': replyLengthStr = 'Length: Provide detailed and comprehensive answers.'; break;
+                }
+
+                switch(parsed.emojiLevel) {
+                    case 'none': emojiLevelStr = 'Emojis: DO NOT use any emojis.'; break;
+                    case 'lots': emojiLevelStr = 'Emojis: Use lots of emojis playfully.'; break;
+                }
             } catch(e) {}
         }
 
         const currentMemoryStr = memory?.summary || 'New user.';
-        const systemPrompt = `${customPrompt}\nContext about this user: ${currentMemoryStr}\nKeep your responses concise and natural for a chat app.`;
+        const systemPrompt = `${customPrompt}\n\n[BEHAVIOR RULES]\n${aiModeStr}\n${replyLengthStr}\n${emojiLevelStr}\n\n[USER CONTEXT]\n${currentMemoryStr}`;
         
         if (!groq) {
             return "Please configure GROQ_API_KEY in your environment variables to enable the AI.";
