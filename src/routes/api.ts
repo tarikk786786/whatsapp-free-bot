@@ -50,17 +50,36 @@ router.get('/stats', async (req, res) => {
         const totalChats = await prisma.chats.count();
         const totalMessages = await prisma.messages.count();
         
+        const botMessageCount = await prisma.messages.count({ where: { sender: 'bot' } });
+        const userMessageCount = await prisma.messages.count({ where: { sender: 'user' } });
+
+        const topChats = await prisma.messages.groupBy({
+            by: ['chat_id'],
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } },
+            take: 5
+        });
+
+        const topContacts = topChats.map(c => ({
+            chatId: c.chat_id,
+            count: c._count.id
+        }));
+        
         res.json({
             status: 'success',
             data: {
                 users: totalUsers,
                 chats: totalChats,
                 messages: totalMessages,
+                botMessages: botMessageCount,
+                userMessages: userMessageCount,
+                topContacts,
                 aiStatus: 'active',
                 connectionStatus
             }
         });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ status: 'error', message: 'Failed to fetch stats' });
     }
 });
@@ -85,6 +104,24 @@ router.get('/chats', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ status: 'error', message: 'Failed to fetch chats' });
+    }
+});
+
+// GET /api/chats/:id/export
+router.get('/chats/:id/export', async (req, res) => {
+    try {
+        const chatId = req.params.id;
+        const messages = await prisma.messages.findMany({
+            where: { chat_id: chatId },
+            orderBy: { timestamp: 'asc' }
+        });
+        
+        res.setHeader('Content-disposition', `attachment; filename=chat_${chatId.replace(/[^a-zA-Z0-9]/g, '_')}.json`);
+        res.setHeader('Content-type', 'application/json');
+        res.send(JSON.stringify(messages, null, 2));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Failed to export chat' });
     }
 });
 

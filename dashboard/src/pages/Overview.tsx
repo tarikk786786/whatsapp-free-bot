@@ -56,6 +56,48 @@ export default function Overview() {
                 </div>
             </div>
 
+            {stats && (stats.botMessages > 0 || stats.userMessages > 0) && (
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Message Volume Ratio</h3>
+                        <div className="flex justify-between text-sm text-gray-500 mb-2">
+                            <span>AI Replied ({stats.botMessages})</span>
+                            <span>User Sent ({stats.userMessages})</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden">
+                            <div 
+                                className="bg-indigo-500 h-4" 
+                                style={{ width: `${(stats.botMessages / (stats.botMessages + stats.userMessages)) * 100}%` }}
+                            ></div>
+                            <div 
+                                className="bg-green-500 h-4" 
+                                style={{ width: `${(stats.userMessages / (stats.botMessages + stats.userMessages)) * 100}%` }}
+                            ></div>
+                        </div>
+                        <div className="flex justify-between text-xs mt-2 font-medium">
+                            <span className="text-indigo-600">{Math.round((stats.botMessages / (stats.botMessages + stats.userMessages)) * 100)}% AI</span>
+                            <span className="text-green-600">{Math.round((stats.userMessages / (stats.botMessages + stats.userMessages)) * 100)}% Manual/User</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Top Active Contacts</h3>
+                        {stats.topContacts && stats.topContacts.length > 0 ? (
+                            <ul className="space-y-3">
+                                {stats.topContacts.map((contact: any, i: number) => (
+                                    <li key={i} className="flex items-center justify-between">
+                                        <span className="text-sm font-medium text-gray-700 truncate max-w-[200px]">{contact.chatId}</span>
+                                        <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">{contact.count} msgs</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-sm text-gray-500">No message data available yet.</p>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {qrStatus?.connectionStatus === 'qr' && qrStatus?.qr && (
                 <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center">
                     <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">Connect WhatsApp</h3>

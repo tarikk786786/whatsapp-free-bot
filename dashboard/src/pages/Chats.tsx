@@ -74,14 +74,21 @@ export default function Chats() {
                                             </span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                         <button 
                                             onClick={() => handleSummarize(chat.id)}
                                             disabled={loadingSummary === chat.id}
                                             className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-md transition-colors"
                                         >
-                                            {loadingSummary === chat.id ? 'Summarizing...' : 'Summarize'}
+                                            {loadingSummary === chat.id ? '...' : 'Summarize'}
                                         </button>
+                                        <a 
+                                            href={`/api/chats/${chat.id}/export`}
+                                            download={`chat_${chat.id}.json`}
+                                            className="inline-block text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded-md transition-colors"
+                                        >
+                                            Export
+                                        </a>
                                     </td>
                                 </tr>
                             ))
